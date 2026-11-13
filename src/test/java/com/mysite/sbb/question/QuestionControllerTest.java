@@ -245,4 +245,14 @@ class QuestionControllerTest {
                 .andExpect(redirectedUrlPattern("**/user/login"));
         assertThat(questionRepository.findById(1).get().getVoter()).isEmpty();
     }
+
+    @Test
+    @DisplayName("질문 본문의 마크다운이 HTML 로 렌더링된다")
+    void t17() throws Exception {
+        mvc.perform(put("/question/modify/1").with(csrf()).with(user("user1"))
+                .param("subject", "마크다운").param("content", "**굵은 글씨**"));
+
+        mvc.perform(get("/question/detail/1"))
+                .andExpect(content().string(containsString("<strong>굵은 글씨</strong>")));
+    }
 }

@@ -304,3 +304,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 50개 통과(리다이렉트 URL 이 실제 생성된 답변 id 의 앵커를 가리키는지 검증)
 - 학습 개념: 영속성 컨텍스트의 쓰기 지연과 `flush()`, IDENTITY 전략에서 id 가 정해지는 시점, URL 프래그먼트(`#`)는 서버로 전송되지 않음
 - 제한 사항: 없음
+
+### 011-01 마크다운 렌더링
+
+- 작업: `org.commonmark:commonmark` 의존성 추가, `CommonUtil.markdown()` 컴포넌트, 상세 화면의 질문·답변 본문을 `th:utext="${@commonUtil.markdown(...)}"`로 출력
+- 이유: 교재 3-12. 본문에 목록·강조·링크 등 마크다운 문법을 쓸 수 있게 함
+- 교재 대응: 3-12 마크다운 적용하기
+- 강사 코드와의 차이: 교재는 입력된 HTML 을 그대로 통과시키지만, `HtmlRenderer.builder().escapeHtml(true)`로 본문에 직접 쓴 `<script>` 같은 태그를 문자로 바꿔 XSS 를 막음. `th:utext`는 이스케이프를 하지 않으므로 이 보호가 필요함
+- 수정 파일: `build.gradle.kts`, `CommonUtil.java`(신규), `templates/question_detail.html`, `test/.../CommonUtilTest.java`(신규), `test/.../QuestionControllerTest.java`
+- 검증: `./gradlew test` 54개 통과(마크다운 변환·HTML 이스케이프·null 처리 단위 테스트 3개, 상세 화면 렌더링 테스트 1개 추가)
+- 학습 개념: `th:text` vs `th:utext`, 템플릿에서 빈 호출(`@beanName`), XSS 와 이스케이프
+- 제한 사항: 새 의존성이므로 실행 중인 서버는 재시작 필요. 마크다운 에디터(미리보기)는 미션 2 범위
