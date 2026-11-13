@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- 강사 45강: 각 페이지의 <title>을 "페이지 제목 | 사이트명" 형태로 합성 -->
+    <title layout:title-pattern="$CONTENT_TITLE | $LAYOUT_TITLE">SBB</title>
+
+    <!-- 강사 방식: 부트스트랩 파일을 저장소에 넣지 않고 cdnjs에서 불러옴 -->
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css">
+    <!-- 교재 2-13: sbb 전용 스타일 -->
+    <link rel="stylesheet" type="text/css" th:href="@{/style.css}">
+</head>
+
+<body>
+<!-- 교재 3-01: 내비게이션 바 -->
+<nav th:replace="~{navbar :: navbarFragment}"></nav>
+
+<!-- 교재 2-15: 각 페이지가 채워 넣는 본문 영역 -->
+<th:block layout:fragment="content"></th:block>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/js/bootstrap.bundle.min.js"></script>
+<!-- 각 페이지 전용 스크립트 영역 -->
+<th:block layout:fragment="script"></th:block>
+</body>
+
+</html>

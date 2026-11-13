@@ -1,0 +1,8 @@
+/* 교재 2-13: 전체 페이지 공통 스타일 */
+textarea {
+    width: 100%;
+}
+
+input[type=submit] {
+    margin-top: 10px;
+}

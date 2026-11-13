@@ -161,3 +161,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 13개 통과. `QuestionService`의 `import com.mysite.sbb.DataNotFoundException` 참조 유지 확인
 - 학습 개념: Java 패키지와 디렉터리 구조의 관계, `git mv`로 이력 보존
 - 제한 사항: 없음
+
+### 002-01 화면 기반, 부트스트랩·공통 레이아웃·내비게이션 바
+
+- 작업: `layout.html`(공통 레이아웃)·`navbar.html`·`static/style.css` 추가. `question_list.html`과 `question_detail.html`을 `layout:decorate`로 레이아웃을 상속하도록 재작성하고 부트스트랩 테이블·카드 적용
+- 이유: 교재 2-13~2-15, 3-01의 화면 기반을 한 번에 마련해 이후 폼·페이징·로그인 화면이 같은 틀을 쓰게 함
+- 교재 대응: 2-13 웹 페이지 디자인, 2-14 부트스트랩, 2-15 템플릿 상속, 3-01 내비게이션 바
+- 강사 코드와의 차이: 교재는 `bootstrap.min.css/js`를 저장소에 복사하지만 강사(14163 39강)처럼 cdnjs 링크를 사용해 바이너리를 저장소에 넣지 않음. 강사 14168 45강의 `layout:title-pattern`으로 페이지별 `<title>` 합성. 답변 목록은 교재 순서(작성순)로 표시하고 기존의 `.reversed`는 제거
+- 수정 파일: `templates/layout.html`, `templates/navbar.html`, `static/style.css`, `templates/question_list.html`, `templates/question_detail.html`, `test/.../QuestionControllerTest.java`(신규)
+- 검증: `./gradlew test` 17개 통과(MockMvc 컨트롤러 테스트 4개 추가). `bootRun` 후 브라우저에서 `/question/list`, `/question/detail/2` 렌더링 확인(제목 `질문 목록 | SBB`, 카드·테이블 표시)
+- 학습 개념: Thymeleaf Layout Dialect(`layout:decorate`, `layout:fragment`), `th:replace` 프래그먼트, `#temporals` 날짜 포맷, MockMvc로 뷰 렌더링 검증
+- 제한 사항: 내비게이션 바의 로그인·회원가입 링크는 Security 도입 단계에서 추가
