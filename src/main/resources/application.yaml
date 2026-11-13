@@ -6,6 +6,11 @@ spring:
     name: sbb
   profiles:
     active: dev
+  # 강사 14168 41강: 폼의 _method 파라미터로 PUT/DELETE 요청을 표현할 수 있게 한다.
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
   jpa:
     show-sql: true
     hibernate:

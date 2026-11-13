@@ -14,7 +14,9 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ActiveProfiles("test")
@@ -83,7 +85,7 @@ class QuestionControllerTest {
         mvc.perform(get("/question/create").with(user("user1")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("question_form"))
-                .andExpect(content().string(containsString("질문등록")));
+                .andExpect(content().string(containsString("질문 등록")));
     }
 
     @Test
@@ -144,5 +146,76 @@ class QuestionControllerTest {
 
         mvc.perform(get("/question/detail/2"))
                 .andExpect(content().string(containsString("admin")));
+    }
+
+    @Test
+    @DisplayName("글쓴이는 질문을 수정할 수 있고 modifyDate 가 기록된다")
+    void t10() throws Exception {
+        // 1번 질문의 글쓴이는 user1
+        mvc.perform(get("/question/modify/1").with(user("user1")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("question_form"))
+                .andExpect(content().string(containsString("sbb가 무엇인가요?")));
+
+        mvc.perform(put("/question/modify/1").with(csrf()).with(user("user1"))
+                        .param("subject", "수정된 제목").param("content", "수정된 내용"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/question/detail/1"));
+
+        Question question = questionRepository.findById(1).get();
+        assertThat(question.getSubject()).isEqualTo("수정된 제목");
+        assertThat(question.getModifyDate()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("글쓴이가 아니면 수정·삭제는 403")
+    void t11() throws Exception {
+        mvc.perform(get("/question/modify/1").with(user("admin")))
+                .andExpect(status().isForbidden());
+
+        mvc.perform(put("/question/modify/1").with(csrf()).with(user("admin"))
+                        .param("subject", "남의 글").param("content", "수정 시도"))
+                .andExpect(status().isForbidden());
+
+        mvc.perform(delete("/question/delete/1").with(csrf()).with(user("admin")))
+                .andExpect(status().isForbidden());
+
+        assertThat(questionRepository.findById(1)).isPresent();
+    }
+
+    @Test
+    @DisplayName("글쓴이는 질문을 삭제할 수 있고 답변도 함께 지워진다")
+    void t12() throws Exception {
+        long before = questionRepository.count();
+
+        mvc.perform(delete("/question/delete/2").with(csrf()).with(user("user1")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"));
+
+        assertThat(questionRepository.count()).isEqualTo(before - 1);
+        assertThat(questionRepository.findById(2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("폼의 _method=put 으로 보낸 POST 도 수정으로 처리된다")
+    void t13() throws Exception {
+        mvc.perform(post("/question/modify/1").with(csrf()).with(user("user1"))
+                        .param("_method", "put")
+                        .param("subject", "폼으로 수정").param("content", "내용"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/question/detail/1"));
+
+        assertThat(questionRepository.findById(1).get().getSubject()).isEqualTo("폼으로 수정");
+    }
+
+    @Test
+    @DisplayName("상세 화면의 수정·삭제 버튼은 글쓴이에게만 보인다")
+    void t14() throws Exception {
+        mvc.perform(get("/question/detail/1").with(user("user1")))
+                .andExpect(content().string(containsString("/question/modify/1")))
+                .andExpect(content().string(containsString("method=\"DELETE\"")));
+
+        mvc.perform(get("/question/detail/1").with(user("admin")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("/question/modify/1"))));
     }
 }

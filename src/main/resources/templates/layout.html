@@ -13,6 +13,11 @@
           href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css">
     <!-- 교재 2-13: sbb 전용 스타일 -->
     <link rel="stylesheet" type="text/css" th:href="@{/style.css}">
+
+    <!-- 강사 14168 46강: 자바스크립트로 만든 폼이 CSRF 토큰을 읽을 수 있도록 메타 태그에 노출 -->
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <!-- 강사 14168 44강: a[method] 링크를 PUT/DELETE 폼 전송으로 바꿔 주는 공통 스크립트 -->
+    <script th:src="@{/resource/global.js}" defer></script>
 </head>
 
 <body>

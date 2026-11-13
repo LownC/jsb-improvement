@@ -260,3 +260,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 37개 통과(비로그인 등록 시 로그인 페이지로 리다이렉트, 글쓴이 저장·표시 테스트 추가). 브라우저에서 비로그인으로 `/question/create` 접근 시 로그인 페이지로 이동, `user1` 로그인 후 질문 등록 시 목록에 글쓴이 `user1` 표시, 상세에서 답변 글쓴이 `admin`/`user1` 표시 확인
 - 학습 개념: `@ManyToOne` 단방향 연관관계와 FK, `Principal`에서 엔티티 조회, `@PreAuthorize`와 로그인 리다이렉트, `sec:authorize`로 입력창 분기
 - 제한 사항: 기존 dev DB에는 `author_id`가 null인 글이 남을 수 있음(DB 파일 삭제 후 재기동하면 샘플 데이터가 새로 생성됨)
+
+### 008-01 질문 수정·삭제, PUT/DELETE 방식
+
+- 작업: `Question.modifyDate` 추가, `QuestionService.modify/delete`, `QuestionController`에 수정 폼 GET, 수정 `@PutMapping`, 삭제 `@DeleteMapping`과 글쓴이 검사(`checkOwner`, 403). `application.yaml`에 `spring.mvc.hiddenmethod.filter.enabled`, `static/resource/global.js`(a[method] 링크를 CSRF 토큰·`_method`가 담긴 POST 폼으로 변환)와 `layout.html`의 `_csrf` 메타·스크립트 추가. `question_form.html`을 등록·수정 겸용(`th:method`)으로, 상세 화면에 글쓴이 전용 수정·삭제 버튼과 "modified at" 표시
+- 이유: 교재 3-09. 삭제를 GET 링크로 처리하는 교재 방식 대신, 상태를 바꾸는 요청은 PUT/DELETE + CSRF 로 보내는 강사 방식을 적용
+- 교재 대응: 3-09 수정과 삭제 기능 추가하기
+- 강사 코드와의 차이: 수정은 `@PutMapping`, 삭제는 `@DeleteMapping`(14168 41강). `global.js`와 `confirm` 처리(43~44강). 권한 오류는 교재의 400 대신 403. 폼 템플릿을 하나로 재사용하며 `modifying` 플래그로 제목·메서드를 바꿈
+- 수정 파일: `question/Question.java`, `question/QuestionService.java`, `question/QuestionController.java`, `application.yaml`, `static/resource/global.js`(신규), `templates/layout.html`, `templates/question_form.html`, `templates/question_detail.html`, `test/.../QuestionControllerTest.java`
+- 검증: `./gradlew test` 42개 통과(글쓴이 수정·삭제 성공, 타인 403, `_method=put` POST 처리, 버튼 노출 분기 테스트 5개 추가). 브라우저에서 `user1`로 질문 수정 → "modified at" 표시 확인. 삭제 링크는 `confirm` 후 `global.js`가 DELETE 폼을 전송함을 확인
+- 학습 개념: HTML 폼은 GET/POST만 지원하므로 `_method`로 PUT/DELETE를 표현, `HiddenHttpMethodFilter`, CSRF 토큰을 JS 폼에 넣는 방법, 소유권 검사 위치(화면 + 서버)
+- 제한 사항: 답변 수정·삭제는 다음 커밋

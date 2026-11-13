@@ -49,4 +49,17 @@ public class QuestionService {
 
         return questionRepository.save(q);
     }
+
+    // 교재 3-09
+    public void modify(Question question, String subject, String content) {
+        question.setSubject(subject);
+        question.setContent(content);
+        question.setModifyDate(LocalDateTime.now());
+        questionRepository.save(question);
+    }
+
+    // 답변은 cascade REMOVE 로 함께 삭제된다.
+    public void delete(Question question) {
+        questionRepository.delete(question);
+    }
 }

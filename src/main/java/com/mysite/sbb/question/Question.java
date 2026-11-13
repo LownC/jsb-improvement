@@ -23,6 +23,9 @@ public class Question {
 
     private LocalDateTime createDate;
 
+    // 교재 3-09: 수정한 적이 있을 때만 값이 들어간다.
+    private LocalDateTime modifyDate;
+
     @Column(length = 200)
     private String subject;
 

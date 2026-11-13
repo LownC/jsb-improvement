@@ -6,11 +6,13 @@ import com.mysite.sbb.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 
@@ -63,5 +65,59 @@ public class QuestionController {
         questionService.create(form.subject(), form.content(), author);
 
         return "redirect:/question/list";
+    }
+
+    // 교재 3-09: 수정 폼. 기존 값을 폼에 채워서 보여준다. 글쓴이가 아니면 403.
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/modify/{id}")
+    public String questionModify(Model model, @PathVariable int id, Principal principal) {
+        Question question = questionService.getQuestion(id);
+        checkOwner(question, principal);
+
+        model.addAttribute("form", new QuestionForm(question.getSubject(), question.getContent()));
+        model.addAttribute("modifying", true);
+        return "question_form";
+    }
+
+    // 강사 14168 41강: 수정은 PUT. 폼은 _method=put 숨은 필드로 전송하고 HiddenHttpMethodFilter 가 PUT 으로 바꿔 준다.
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/modify/{id}")
+    public String questionModify(
+            Model model,
+            @PathVariable int id,
+            @ModelAttribute("form") @Valid QuestionForm form,
+            BindingResult bindingResult,
+            Principal principal
+    ) {
+        Question question = questionService.getQuestion(id);
+        checkOwner(question, principal);
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("modifying", true);
+            return "question_form";
+        }
+
+        questionService.modify(question, form.subject(), form.content());
+
+        return String.format("redirect:/question/detail/%s", id);
+    }
+
+    // 강사 14168 41강: 삭제는 DELETE. 화면의 a[method="DELETE"] 링크를 global.js 가 폼 전송으로 바꿔 준다.
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/delete/{id}")
+    public String questionDelete(@PathVariable int id, Principal principal) {
+        Question question = questionService.getQuestion(id);
+        checkOwner(question, principal);
+
+        questionService.delete(question);
+
+        return "redirect:/";
+    }
+
+    // 글쓴이 본인인지 확인. 교재는 400(BAD_REQUEST)을 쓰지만 권한 문제이므로 403(FORBIDDEN)이 더 정확하다.
+    private void checkOwner(Question question, Principal principal) {
+        if (question.getAuthor() == null || !question.getAuthor().getUsername().equals(principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 또는 삭제 권한이 없습니다.");
+        }
     }
 }
