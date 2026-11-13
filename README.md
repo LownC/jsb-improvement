@@ -194,3 +194,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 23개 통과(답변 등록·빈 답변 거부·없는 질문 404 테스트 3개 추가)
 - 학습 개념: 한 화면에 두 폼 객체가 있을 때 모델 이름 구분(`form` vs `answerForm`), 검증 실패 시 원래 화면 재렌더링에 필요한 모델 복구
 - 제한 사항: 브라우저 검증은 다음 커밋의 화면 확인과 함께 수행
+
+### 004-01 질문 목록 페이징
+
+- 작업: `QuestionRepository.findAll(Pageable)` 선언, `QuestionService.getList(int page)`(10건, 작성일시·id 내림차순), `QuestionController.list`의 `page` 파라미터, `question_list.html`에 부트스트랩 페이지 네비게이션 추가. `TestInitData`에 dev 프로파일 전용 샘플 질문 300건 생성
+- 이유: 교재 3-02 페이징. 글이 많아져도 목록이 한 화면에 들어가도록 함
+- 교재 대응: 3-02 페이징 기능 추가하기
+- 강사 코드와의 차이: 교재는 테스트 코드로 300건을 넣지만, 테스트가 "질문 2건"을 전제로 하므로 `Environment.matchesProfiles("dev")`로 개발 실행 시에만 생성. 작성일시가 같은 글의 순서가 흔들리지 않도록 `id` 2차 정렬 추가(교재에는 없음)
+- 수정 파일: `question/QuestionRepository.java`, `question/QuestionService.java`, `question/QuestionController.java`, `templates/question_list.html`, `TestInitData.java`, `test/.../QuestionControllerTest.java`
+- 검증: `./gradlew test` 24개 통과. dev DB 초기화 후 `bootRun`, 브라우저에서 `/question/list?page=1`이 10건과 페이지 링크(이전·0~6·다음)를 표시함을 확인
+- 학습 개념: `Pageable`/`PageRequest`/`Page`, `Sort` 다중 정렬, `#numbers.sequence`, 프로파일별 초기 데이터 분기
+- 제한 사항: 페이지 링크가 `?page=N` 단순 링크라서 검색어와 함께 쓰려면 3-13에서 폼 전송 방식으로 바꿔야 함

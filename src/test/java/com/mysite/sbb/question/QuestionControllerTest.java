@@ -61,6 +61,19 @@ class QuestionControllerTest {
     }
 
     @Test
+    @DisplayName("목록은 페이지 단위(10건, 최신순)로 조회된다")
+    void t1_paging() throws Exception {
+        mvc.perform(get("/question/list").param("page", "0"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeExists("paging"))
+                .andExpect(content().string(containsString("pagination")));
+
+        // 범위를 벗어난 페이지는 빈 페이지로 응답하고 오류가 나지 않는다
+        mvc.perform(get("/question/list").param("page", "99"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @DisplayName("질문 등록 폼이 표시된다")
     void t5() throws Exception {
         mvc.perform(get("/question/create"))
