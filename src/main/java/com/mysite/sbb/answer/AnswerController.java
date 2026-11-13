@@ -6,15 +6,14 @@ import com.mysite.sbb.user.SiteUser;
 import com.mysite.sbb.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 
@@ -23,6 +22,7 @@ import java.security.Principal;
 @RequestMapping("/answer")
 public class AnswerController {
     private final QuestionService questionService;
+    private final AnswerService answerService;
     private final UserService userService;
 
     // 컨트롤러 메서드에 @Transactional 을 두면 question.addAnswer() 로 추가된 답변이
@@ -49,5 +49,55 @@ public class AnswerController {
         question.addAnswer(answerForm.content(), author);
 
         return String.format("redirect:/question/detail/%s", id);
+    }
+
+    // 교재 3-09: 답변 수정 폼
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/modify/{id}")
+    public String answerModify(Model model, @PathVariable int id, Principal principal) {
+        Answer answer = answerService.getAnswer(id);
+        checkOwner(answer, principal);
+
+        model.addAttribute("form", new AnswerForm(answer.getContent()));
+        return "answer_form";
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/modify/{id}")
+    public String answerModify(
+            @PathVariable int id,
+            @ModelAttribute("form") @Valid AnswerForm form,
+            BindingResult bindingResult,
+            Principal principal
+    ) {
+        Answer answer = answerService.getAnswer(id);
+        checkOwner(answer, principal);
+
+        if (bindingResult.hasErrors()) {
+            return "answer_form";
+        }
+
+        answerService.modify(answer, form.content());
+
+        return String.format("redirect:/question/detail/%s", answer.getQuestion().getId());
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/delete/{id}")
+    @Transactional
+    public String answerDelete(@PathVariable int id, Principal principal) {
+        Answer answer = answerService.getAnswer(id);
+        checkOwner(answer, principal);
+
+        int questionId = answer.getQuestion().getId();
+        answerService.delete(answer);
+
+        return String.format("redirect:/question/detail/%s", questionId);
+    }
+
+    private void checkOwner(Answer answer, Principal principal) {
+        if (answer.getAuthor() == null || !answer.getAuthor().getUsername().equals(principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 또는 삭제 권한이 없습니다.");
+        }
     }
 }

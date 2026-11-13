@@ -271,3 +271,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 42개 통과(글쓴이 수정·삭제 성공, 타인 403, `_method=put` POST 처리, 버튼 노출 분기 테스트 5개 추가). 브라우저에서 `user1`로 질문 수정 → "modified at" 표시 확인. 삭제 링크는 `confirm` 후 `global.js`가 DELETE 폼을 전송함을 확인
 - 학습 개념: HTML 폼은 GET/POST만 지원하므로 `_method`로 PUT/DELETE를 표현, `HiddenHttpMethodFilter`, CSRF 토큰을 JS 폼에 넣는 방법, 소유권 검사 위치(화면 + 서버)
 - 제한 사항: 답변 수정·삭제는 다음 커밋
+
+### 008-02 답변 수정·삭제
+
+- 작업: `Answer.modifyDate`, `AnswerService`(조회·수정·삭제) 신설, `AnswerController`에 수정 폼 GET·`@PutMapping`·`@DeleteMapping`과 글쓴이 검사, `answer_form.html`, 상세 화면의 답변마다 글쓴이 전용 수정·삭제 버튼과 "modified at". `Question.answers`에 `orphanRemoval = true`와 `removeAnswer()` 추가
+- 이유: 교재 3-09의 답변 부분. 답변 삭제 시 질문의 `answers` 목록에서도 빼야 cascade PERSIST 가 삭제를 되살리지 않음
+- 교재 대응: 3-09 수정과 삭제 기능 추가하기(답변)
+- 강사 코드와의 차이: 강사 14168 37강처럼 `orphanRemoval`과 컬렉션 제거로 삭제를 표현. PUT/DELETE + 403 은 008-01과 동일 규칙
+- 수정 파일: `answer/Answer.java`, `answer/AnswerService.java`(신규), `answer/AnswerController.java`, `question/Question.java`, `templates/answer_form.html`(신규), `templates/question_detail.html`, `test/.../AnswerControllerTest.java`
+- 검증: `./gradlew test` 46개 통과(글쓴이 수정, 타인 403, 삭제 후 질문의 답변 목록 반영, 빈 내용 거부 테스트 4개 추가). 삭제 링크의 JS 흐름은 008-01에서 동일 스크립트로 확인
+- 학습 개념: `orphanRemoval`과 cascade PERSIST 의 상호작용, 양쪽(컬렉션·리포지터리)에서 일관되게 삭제하기, 서비스 계층의 `@Transactional`
+- 제한 사항: 없음

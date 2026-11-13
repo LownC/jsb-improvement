@@ -15,7 +15,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ActiveProfiles("test")
@@ -28,6 +31,9 @@ class AnswerControllerTest {
 
     @Autowired
     private QuestionRepository questionRepository;
+
+    @Autowired
+    private AnswerRepository answerRepository;
 
     @Test
     @DisplayName("답변을 등록하면 질문 상세로 리다이렉트되고 답변이 늘어난다")
@@ -84,5 +90,58 @@ class AnswerControllerTest {
                 .andExpect(redirectedUrlPattern("**/user/login"));
 
         assertThat(question.getAnswers()).hasSize(before);
+    }
+
+    @Test
+    @DisplayName("답변 글쓴이는 답변을 수정할 수 있다 (답변 2의 글쓴이는 user1)")
+    void t5() throws Exception {
+        mvc.perform(get("/answer/modify/2").with(user("user1")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("answer_form"))
+                .andExpect(content().string(containsString("맞습니다!")));
+
+        mvc.perform(put("/answer/modify/2").with(csrf()).with(user("user1"))
+                        .param("content", "수정된 답변"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/question/detail/2"));
+
+        Answer answer = answerRepository.findById(2).get();
+        assertThat(answer.getContent()).isEqualTo("수정된 답변");
+        assertThat(answer.getModifyDate()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("답변 글쓴이가 아니면 수정·삭제는 403 (답변 1의 글쓴이는 admin)")
+    void t6() throws Exception {
+        mvc.perform(get("/answer/modify/1").with(user("user1")))
+                .andExpect(status().isForbidden());
+
+        mvc.perform(delete("/answer/delete/1").with(csrf()).with(user("user1")))
+                .andExpect(status().isForbidden());
+
+        assertThat(answerRepository.findById(1)).isPresent();
+    }
+
+    @Test
+    @DisplayName("답변 글쓴이는 답변을 삭제할 수 있고 질문의 답변 목록에서도 빠진다")
+    void t7() throws Exception {
+        mvc.perform(delete("/answer/delete/1").with(csrf()).with(user("admin")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/question/detail/2"));
+
+        assertThat(answerRepository.findById(1)).isEmpty();
+        Question question = questionRepository.findById(2).get();
+        assertThat(question.getAnswers()).hasSize(1);
+        assertThat(question.getAnswers().get(0).getId()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("빈 내용으로 수정하면 폼이 다시 표시된다")
+    void t8() throws Exception {
+        mvc.perform(put("/answer/modify/2").with(csrf()).with(user("user1"))
+                        .param("content", " "))
+                .andExpect(status().isOk())
+                .andExpect(view().name("answer_form"))
+                .andExpect(model().attributeHasFieldErrors("form", "content"));
     }
 }
