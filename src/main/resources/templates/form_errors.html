@@ -1,0 +1,28 @@
+<!--
+  강사 14168 23~25강 방식의 폼 오류 프래그먼트.
+  오류 메시지는 "순번-필드명-메시지" 형식으로 작성한다. (예: 01-subject-제목은 필수항목입니다.)
+  - 순번으로 정렬해 항상 같은 순서로 보여주고
+  - 필드명은 data-error-field-name 속성으로 남겨 첫 오류 필드에 포커스를 준다.
+-->
+<th:block th:fragment="formErrorsFragment">
+    <ul th:if="${#fields.hasAnyErrors()}" class="alert alert-danger" role="alert">
+        <li th:each="err : ${#fields.allErrors().stream().sorted()}"
+            th:with="errStrs = ${err.split('-', 3)},
+                     errFieldName = ${errStrs[1]},
+                     errMsg = ${errStrs[2]}"
+            th:data-error-field-name="${errFieldName}"
+            th:text="${errMsg}"></li>
+    </ul>
+
+    <script>
+        // 이 프래그먼트를 포함한 가장 마지막 폼에서 첫 번째 오류 필드를 찾아 포커스
+        (() => {
+            const forms = document.querySelectorAll('form');
+            const lastForm = forms[forms.length - 1];
+            const errorFieldName = lastForm?.querySelector('ul > li')?.dataset?.errorFieldName || '';
+            if (errorFieldName.length > 0 && lastForm[errorFieldName]) {
+                setTimeout(() => lastForm[errorFieldName].focus());
+            }
+        })();
+    </script>
+</th:block>

@@ -9,8 +9,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ActiveProfiles("test")
@@ -20,6 +22,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class QuestionControllerTest {
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private QuestionRepository questionRepository;
 
     @Test
     @DisplayName("질문 목록 페이지가 레이아웃과 함께 렌더링된다")
@@ -53,5 +58,45 @@ class QuestionControllerTest {
         mvc.perform(get("/"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/question/list"));
+    }
+
+    @Test
+    @DisplayName("질문 등록 폼이 표시된다")
+    void t5() throws Exception {
+        mvc.perform(get("/question/create"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("question_form"))
+                .andExpect(content().string(containsString("질문등록")));
+    }
+
+    @Test
+    @DisplayName("질문을 등록하면 목록으로 리다이렉트되고 저장된다")
+    void t6() throws Exception {
+        long before = questionRepository.count();
+
+        mvc.perform(post("/question/create")
+                        .param("subject", "새 질문")
+                        .param("content", "새 내용"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/question/list"));
+
+        assertThat(questionRepository.count()).isEqualTo(before + 1);
+        assertThat(questionRepository.findBySubject("새 질문")).isPresent();
+    }
+
+    @Test
+    @DisplayName("제목이 비어 있으면 폼이 다시 표시되고 오류 메시지가 나온다")
+    void t7() throws Exception {
+        long before = questionRepository.count();
+
+        mvc.perform(post("/question/create")
+                        .param("subject", "")
+                        .param("content", "내용만 있음"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("question_form"))
+                .andExpect(model().attributeHasFieldErrors("form", "subject"))
+                .andExpect(content().string(containsString("제목은 필수항목입니다.")));
+
+        assertThat(questionRepository.count()).isEqualTo(before);
     }
 }

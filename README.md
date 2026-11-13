@@ -172,3 +172,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 17개 통과(MockMvc 컨트롤러 테스트 4개 추가). `bootRun` 후 브라우저에서 `/question/list`, `/question/detail/2` 렌더링 확인(제목 `질문 목록 | SBB`, 카드·테이블 표시)
 - 학습 개념: Thymeleaf Layout Dialect(`layout:decorate`, `layout:fragment`), `th:replace` 프래그먼트, `#temporals` 날짜 포맷, MockMvc로 뷰 렌더링 검증
 - 제한 사항: 내비게이션 바의 로그인·회원가입 링크는 Security 도입 단계에서 추가
+
+### 003-01 질문 등록, 폼·입력값 검증
+
+- 작업: `spring-boot-starter-validation` 추가. `QuestionForm`(record, `@NotBlank`/`@Size`)과 `QuestionService.create`, `QuestionController`의 `/question/create` GET·POST 추가. `question_form.html`과 공통 오류 프래그먼트 `form_errors.html` 작성, 목록 화면에 "질문 등록하기" 버튼 추가
+- 이유: 교재 2-16 질문 등록 기능. 입력값 검증 실패 시 예외가 아니라 폼을 다시 보여주고 입력값을 유지하기 위해 `@Valid` + `BindingResult` 사용
+- 교재 대응: 2-16 질문 등록 및 폼
+- 강사 코드와의 차이: 폼 DTO를 record로 작성(14168 40강). 오류 메시지를 "순번-필드명-메시지" 형식으로 적고 `form_errors.html`에서 정렬·필드명 추출·첫 오류 필드 자동 포커스(14168 23~25강). `th:action` 값을 비워 현재 URL로 전송(14168 5강). 모델 이름은 `form`으로 통일(14168 18강)
+- 수정 파일: `build.gradle.kts`, `question/QuestionForm.java`(신규), `question/QuestionService.java`, `question/QuestionController.java`, `templates/question_form.html`(신규), `templates/form_errors.html`(신규), `templates/question_list.html`, `test/.../QuestionControllerTest.java`
+- 검증: `./gradlew test` 20개 통과(폼 표시·정상 등록·빈 제목 거부 테스트 3개 추가). 브라우저에서 빈 폼 제출 시 오류 메시지 2개 표시와 등록 거부 확인
+- 학습 개념: Bean Validation(`@NotBlank`, `@Size`), `@ModelAttribute`와 `th:object`/`th:field`, `BindingResult`의 역할, `#fields.allErrors()`
+- 제한 사항: 의존성을 추가한 뒤에는 실행 중인 `bootRun`을 재시작해야 검증이 동작함(DevTools 재시작은 새 의존성을 반영하지 못함). 작성자 정보는 회원 기능 이후 추가
