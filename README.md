@@ -42,9 +42,12 @@
 - H2 Database (runtime)
 - Lombok
 - Spring Boot DevTools
-- JUnit 5, AssertJ (spring-boot-starter-test)
+- JUnit 5, AssertJ (spring-boot-starter-test), spring-security-test
+- Spring Security, thymeleaf-extras-springsecurity6 (005-01)
+- Bean Validation (spring-boot-starter-validation) (003-01)
+- commonmark (마크다운 → HTML) (011-01)
 
-Spring Security, Validation, MySQL 드라이버는 아직 의존성에 없습니다.
+MySQL 드라이버는 사용하지 않습니다(H2 파일 DB로 개발).
 
 ## 5. 실행 환경
 
@@ -55,77 +58,101 @@ Spring Security, Validation, MySQL 드라이버는 아직 의존성에 없습니
 | dev | `application-dev.yaml` | H2 파일 DB (`./db_dev`, MySQL 호환 모드) | Thymeleaf 캐시 비활성, 템플릿을 파일 시스템에서 직접 읽음 |
 | test | `application-test.yaml` | H2 인메모리 DB (`db_test`) | 테스트 클래스에서 `@ActiveProfiles("test")`로 사용 |
 
-공통 설정: JPA `ddl-auto: update`, SQL 로그 출력 및 포맷, 바인딩 파라미터 TRACE 로깅.
+공통 설정: JPA `ddl-auto: update`, SQL 로그 출력 및 포맷, 바인딩 파라미터 TRACE 로깅, `_method` 숨은 필드로 PUT/DELETE 표현(`spring.mvc.hiddenmethod.filter.enabled`).
+dev 프로파일에서는 H2 콘솔(`/h2-console`)이 열려 있습니다.
 
 H2 DB 파일(`*.mv.db`, `*.trace.db`, `*.lock.db`)은 `.gitignore`로 제외됩니다.
 DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 
-**주의: 이 저장소에서의 빌드·실행·테스트는 아직 수행하지 않았습니다. 실행 가능 여부는 미검증입니다.**
+### 실행 방법
+
+```bash
+./gradlew.bat bootRun
+```
+
+- 브라우저에서 http://localhost:8080 접속 (루트는 `/question/list`로 이동)
+- 첫 기동 시 `TestInitData`가 샘플 데이터를 만듭니다: 회원 `admin`, `user1`(비밀번호는 `TestInitData.java` 참고, 로컬 샘플용), 질문 2건과 답변 2건, dev 프로파일에서는 페이징 확인용 질문 300건 추가
+- 샘플 데이터를 처음부터 다시 만들려면 서버를 멈춘 뒤 프로젝트 루트의 `db_dev.mv.db`를 지우고 재기동
+- 의존성을 바꾼 뒤에는 DevTools 재시작만으로 반영되지 않으므로 `bootRun`을 다시 실행
 
 ## 6. 기능 구현 현황
 
-"코드 존재"는 해당 코드가 저장소에 있다는 뜻이며, 정상 동작이 검증되었다는 뜻이 아닙니다.
+미션 1(교재 2장 ~ 3-13)의 기능이 모두 구현되어 있습니다. "검증"은 자동 테스트와 브라우저 수동 확인을 뜻합니다.
 
-### 코드 존재 (동작 미검증)
+| 교재 절 | 기능 | 커밋 | 검증 |
+|---|---|---|---|
+| 2-01 ~ 2-12 | 프로젝트 설정, 엔티티, 리포지터리, 목록·상세, 답변 등록 | 000-01 | 테스트 |
+| 2-13 ~ 2-15, 3-01 | 스타일, 부트스트랩, 공통 레이아웃, 내비게이션 바 | 002-01 | 테스트·브라우저 |
+| 2-16 | 질문 등록 폼, 질문·답변 입력값 검증 | 003-01, 003-02 | 테스트·브라우저 |
+| 3-02 ~ 3-04 | 페이징, 게시물 번호, 답변 개수 | 004-01, 004-02 | 테스트·브라우저 |
+| 3-05 | Spring Security, CSRF, BCrypt | 005-01 | 테스트 |
+| 3-06 | 회원가입 | 005-02 | 테스트·브라우저 |
+| 3-07 | 로그인·로그아웃 | 006-01 | 테스트·브라우저 |
+| 3-08 | 글쓴이 저장·표시, 로그인 사용자만 작성 | 007-01 | 테스트·브라우저 |
+| 3-09 | 질문·답변 수정·삭제(PUT/DELETE), 소유자 검사 | 008-01, 008-02 | 테스트·브라우저 |
+| 3-10 | 질문·답변 추천 | 009-01 | 테스트·브라우저 |
+| 3-11 | 답변 앵커 | 010-01 | 테스트·브라우저 |
+| 3-12 | 마크다운 렌더링(HTML 이스케이프) | 011-01 | 테스트·브라우저 |
+| 3-13 | 검색 | 012-01 | 테스트·브라우저 |
 
-| 기능 | 위치 |
-|---|---|
-| 루트 URL → 질문 목록 리다이렉트 | `MainController` |
-| 질문 목록 | `QuestionController.list`, `templates/question_list.html` |
-| 질문 상세 | `QuestionController.detail`, `templates/question_detail.html` |
-| 답변 작성 | `AnswerController.createAnswer`, `Question.addAnswer` |
-| JPA 엔티티 및 연관관계 | `Question`(1) ↔ `Answer`(N), `@OneToMany(mappedBy)` / `@ManyToOne(fetch = LAZY)` |
-| Repository | `QuestionRepository`(findBySubject, findBySubjectAndContent, findBySubjectLike), `AnswerRepository` |
-| 서비스 | `QuestionService`(getList, getQuestion) |
-| 404 예외 | `DataNotFoundException` (`@ResponseStatus(NOT_FOUND)`) |
-| 샘플 데이터 생성 | `TestInitData` (ApplicationRunner, 질문 2건·답변 2건) |
-| 테스트 코드 | `SbbApplicationTests`, `QuestionRepositoryTest`, `PostRepositoryTest` |
+### 미구현 (미션 2 범위)
 
-### 미구현
+- 3-14 추가 기능 9개 (답변 페이징·정렬, 댓글, 카테고리, 비밀번호 변경·찾기, 프로필, 조회 수, 소셜 로그인, 마크다운 에디터 등)
+- 4장 배포
 
-- 교재 2-13 이후 (웹 페이지 디자인, 부트스트랩, 내비게이션 바)
-- 회원가입 및 로그인·로그아웃
-- 질문·답변 수정·삭제
-- 페이징, 추천, 검색, 마크다운, 앵커
-- 폼 유효성 검증
-- 3-14 추가 기능 (도전과제)
+## 7. 교재 대비 개선 사항 (적용됨)
 
-## 7. 교재 대비 개선 예정 사항
+강사 14163·14168 강의에서 가져와 적용한 내용입니다. 각 항목의 근거는 작업내역의 "강사 코드와의 차이"에 있습니다.
 
-아래 항목은 모두 **계획**이며 아직 구현되지 않았습니다.
+- 폼 DTO를 record로 작성하고 `@Valid` + `BindingResult`로 검증 실패 시 폼을 다시 보여줌
+- 오류 메시지를 "순번-필드명-메시지" 형식으로 적고 `form_errors.html`에서 정렬·첫 오류 필드 자동 포커스
+- 수정·삭제·추천처럼 데이터를 바꾸는 요청은 GET 링크가 아니라 PUT/DELETE/POST + CSRF 토큰(`global.js`, `HiddenHttpMethodFilter`)
+- 로그아웃도 POST 폼
+- 부트스트랩은 저장소에 복사하지 않고 cdnjs 링크 사용, `layout:title-pattern`으로 페이지별 제목
+- `@ManyToOne`은 모두 LAZY, `orphanRemoval`로 답변 삭제를 컬렉션에서 표현
+- 마크다운 출력 시 HTML 이스케이프로 XSS 방지(교재에는 없음)
+- 권한 오류는 400 대신 403
+- 기동 시 샘플 회원·글 생성(`TestInitData`)과 dev 전용 대량 데이터
 
-- 개발/테스트 DB 분리 검증
-- JPA 연관관계 및 트랜잭션 경계 검토
-- Thymeleaf 폼 처리 개선
-- 입력값 검증 (Validation)
-- Spring Security 도입
-- 3-14 추가 기능 구현
+적용하지 않은 것: 강사 14168의 `BaseEntity`(`@MappedSuperclass` + Auditing) 공통화는 기존 엔티티 구조를 유지하기 위해 보류(미션 2 전에 검토)
 
 ## 8. 테스트 방법
 
 테스트 코드는 `src/test/java/com/mysite/sbb` 아래에 있습니다.
 
-| 클래스 | 대상 |
-|---|---|
-| `SbbApplicationTests` | `QuestionRepository.findAll` |
-| `QuestionRepositoryTest` | 질문 조회·수정·삭제, 답변 생성·조회 (t1 ~ t11) |
-| `PostRepositoryTest` | 위와 유사한 내용 (t1 ~ t12) |
+| 클래스 | 대상 | 개수 |
+|---|---|---|
+| `SbbApplicationTests` | `QuestionRepository.findAll` | 1 |
+| `QuestionRepositoryTest` | 질문 조회·수정·삭제, 답변 생성·조회 | 12 |
+| `QuestionControllerTest` | 목록·페이징·검색, 등록·검증, 수정·삭제·추천과 권한, 마크다운 | 20 |
+| `AnswerControllerTest` | 답변 등록·검증, 수정·삭제·추천과 권한, 앵커 | 10 |
+| `UserControllerTest` | 회원가입 폼·성공·비밀번호 불일치·중복 ID·형식 오류 | 5 |
+| `LoginTest` | 로그인 성공·실패, 로그아웃, 메뉴 분기 | 5 |
+| `CommonUtilTest` | 마크다운 변환, HTML 이스케이프 | 3 |
 
-테스트는 `test` 프로파일(인메모리 H2)을 사용하며, 리포지터리 테스트에는 `@Transactional`이 적용되어 각 테스트 후 롤백됩니다.
-
-실행 명령(참고용, 아직 실행하지 않음):
+테스트는 `test` 프로파일(인메모리 H2)을 사용하며, `@Transactional`로 각 테스트 후 롤백됩니다.
+컨트롤러 테스트는 MockMvc 로 실제 뷰 렌더링까지 확인하고, POST/PUT/DELETE 에는 `csrf()`, 로그인이 필요한 요청에는 `user("user1")` 등을 붙입니다.
 
 ```bash
-./gradlew test
+./gradlew.bat test
 ```
 
-**현재 테스트 결과: 미검증.** 이 저장소에서 테스트를 실행한 적이 없습니다.
+**현재 테스트 결과: 56개 전부 통과** (2026-11-13, 012-01 커밋 기준).
 
-알려진 미검증 사항:
+브라우저 수동 확인(기동 후): 목록·페이징·검색, 회원가입·로그인·로그아웃, 질문 등록·검증 오류, 글쓴이 표시, 수정(PUT)·삭제(DELETE), 추천, 답변 앵커, 마크다운·스크립트 이스케이프.
 
-- `QuestionRepositoryTest`와 `PostRepositoryTest`가 내용이 중복되며, 답변 개수에 대한 기대값이 서로 다릅니다.
-- `QuestionRepositoryTest.java`와 `DataNotFoundException.java`는 파일 위치와 `package` 선언이 일치하지 않습니다.
-- 위 문제는 기준점 보존을 위해 원형 그대로 두었으며, 정리는 별도 작업으로 진행합니다.
+## 9. 시연 안내
+
+1. 서버 기동 후 http://localhost:8080 접속. 목록·페이징·검색("sbb") 확인
+2. 비로그인 상태에서 "질문 등록하기" 클릭 → 로그인 페이지로 이동하는 것 확인
+3. 회원가입으로 새 계정 생성(또는 샘플 계정 `user1`로 로그인)
+4. 질문 등록: 빈 폼 제출로 검증 오류 확인 → 정상 등록 → 목록에 글쓴이 표시
+5. 상세에서 답변 등록(마크다운 `**굵게**`, 목록 문법) → 앵커로 이동, 렌더링 확인
+6. 본인 글 수정("modified at" 표시)·삭제(confirm) / 다른 계정(`admin`)으로 로그인해 버튼이 없고 URL 직접 접근 시 403 확인
+7. 추천 클릭 → 배지 증가, 다시 클릭해도 그대로
+8. 로그아웃 → 메뉴가 로그인·회원가입으로 바뀜
+
+주의: 브라우저의 `confirm()` 대화상자가 차단된 환경에서는 삭제·추천이 동작하지 않습니다.
 
 ## 작업내역
 
@@ -326,3 +353,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 56개 통과(제목·답변 내용·답변 글쓴이·질문 글쓴이·없는 단어 검색 건수, 검색어 유지 테스트 2개 추가)
 - 학습 개념: JPQL `left outer join ... on`, `distinct` 가 필요한 이유(1:N 조인의 행 중복), `Page` 와 검색 조건의 결합, 조회 요청은 GET 으로
 - 제한 사항: `like %kw%` 는 인덱스를 타지 못하므로 데이터가 많아지면 전문 검색 도입을 고려
+
+### 013-01 문서, 미션 1 완료 현황 반영
+
+- 작업: README 4~8절을 현재 구현에 맞게 갱신(기술 스택, 실행 방법, 기능 현황표, 적용된 개선 사항, 테스트 현황 56개) 하고 9절 시연 안내 추가
+- 이유: README 가 실제 구현과 일치해야 하며, 영상 제작 전 시연 순서를 정리
+- 교재 대응: 전체(2-13 ~ 3-13)
+- 강사 코드와의 차이: 해당 없음(문서)
+- 수정 파일: `README.md`
+- 검증: `./gradlew test` 56개 통과 상태에서 문서만 변경
+- 학습 개념: 커밋별 복습 순서는 작업내역의 번호 순서를 따르면 됨
+- 제한 사항: 미션 2(3-14)와 배포(4장)는 범위 밖
