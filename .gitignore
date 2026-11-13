@@ -35,3 +35,15 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### H2 database files ###
+*.mv.db
+*.trace.db
+*.lock.db
+
+### Application log files ###
+*.log
+
+### OS-generated files ###
+.DS_Store
+Thumbs.db
