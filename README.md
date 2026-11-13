@@ -150,3 +150,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 실행, 13개 테스트 전부 통과(24개 → 13개, 중복 11개 제거·고유 검증 1개 보존)
 - 학습 개념: 테스트 간 독립성(`@Transactional` 롤백), 샘플 데이터와 기대값의 일치, IDENTITY 전략의 즉시 INSERT
 - 제한 사항: 테스트 클래스 파일 위치와 package 불일치는 다음 커밋에서 정리
+
+### 001-02 기준선 복구, 파일 위치와 package 선언 일치
+
+- 작업: `QuestionRepositoryTest.java`를 `question/` 폴더로, `DataNotFoundException.java`를 `com/mysite/sbb/` 루트로 이동(`git mv`). 코드 내용은 변경하지 않음
+- 이유: 두 파일의 물리적 경로가 `package` 선언과 달라 IDE 경고가 발생하고 탐색이 혼란스러웠음. Gradle 컴파일에는 영향이 없었으나 교재·강사 코드와 같은 구조로 정리
+- 교재 대응: 2-06 도메인별로 분류하기
+- 강사 코드와의 차이: 강사 저장소와 동일한 위치(`DataNotFoundException`은 루트 패키지, 테스트는 `question` 패키지)
+- 수정 파일: 이동 2건
+- 검증: `./gradlew test` 13개 통과. `QuestionService`의 `import com.mysite.sbb.DataNotFoundException` 참조 유지 확인
+- 학습 개념: Java 패키지와 디렉터리 구조의 관계, `git mv`로 이력 보존
+- 제한 사항: 없음
