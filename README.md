@@ -139,3 +139,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 알려진 문제: 중복 테스트, 일부 패키지 경로 불일치, 런타임 동작 미검증
 - 학습 주제: Git 이력, Spring Boot 기본 구조, JPA 및 MVC
 - Git 참조: 000-01
+
+### 001-01 기준선 복구, 중복 테스트 정리
+
+- 작업: `PostRepositoryTest` 삭제. 고유 검증이던 t12(2번 질문 첫 답변 id=1)와 t8의 `id > 0` 단언을 `QuestionRepositoryTest`로 이동
+- 이유: 두 클래스가 같은 리포지터리를 검증하면서 답변 개수 기대값(1 vs 2)이 달라 t11이 실패했음. 샘플 데이터(`TestInitData`)와 강사 최종 코드 모두 답변 2개이므로 2가 올바른 값
+- 교재 대응: 2-05 리포지터리 테스트
+- 강사 코드와의 차이: 강사 저장소(p-14163-2 태그 039)는 `QuestionRepositoryTest` 하나만 유지. 동일한 구성으로 정리
+- 수정 파일: `src/test/java/com/mysite/sbb/QuestionRepositoryTest.java`, `src/test/java/com/mysite/sbb/question/PostRepositoryTest.java`(삭제)
+- 검증: `./gradlew test` 실행, 13개 테스트 전부 통과(24개 → 13개, 중복 11개 제거·고유 검증 1개 보존)
+- 학습 개념: 테스트 간 독립성(`@Transactional` 롤백), 샘플 데이터와 기대값의 일치, IDENTITY 전략의 즉시 INSERT
+- 제한 사항: 테스트 클래스 파일 위치와 package 불일치는 다음 커밋에서 정리

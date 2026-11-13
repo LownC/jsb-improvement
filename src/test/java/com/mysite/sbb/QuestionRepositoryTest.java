@@ -101,6 +101,9 @@ class QuestionRepositoryTest {
         answer.setQuestion(question);
         answer.setCreateDate(LocalDateTime.now());
         answerRepository.save(answer);
+
+        // IDENTITY 전략은 save 시점에 INSERT가 실행되므로 id가 즉시 채워진다.
+        assertThat(answer.getId()).isGreaterThan(0);
     }
 
     @Test
@@ -138,5 +141,16 @@ class QuestionRepositoryTest {
 
         Answer answer = answers.get(0);
         assertThat(answer.getContent()).isEqualTo("네 자동으로 생성됩니다.");
+    }
+
+    @Test
+    @DisplayName("findAnswer by question")
+    void t12() {
+        Question question = questionRepository.findById(2).get();
+
+        // 샘플 데이터에서 답변은 2번 질문에만 달려 있으므로 첫 답변의 id는 1이다.
+        Answer answer1 = question.getAnswers().get(0);
+
+        assertThat(answer1.getId()).isEqualTo(1);
     }
 }
