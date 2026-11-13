@@ -249,3 +249,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 34개 통과(로그인 폼·성공·실패·로그아웃·메뉴 분기 테스트 5개). 서버 재시작 후 브라우저에서 테스트 계정 가입 → 로그인(메뉴에 `로그아웃 (demo1)` 표시) → 로그아웃까지 확인
 - 학습 개념: `UserDetailsService`와 `DaoAuthenticationProvider`, `formLogin`/`logout` 설정, `sec:authorize`·`sec:authentication`, 로그아웃이 POST인 이유
 - 제한 사항: 로그인 없이도 질문·답변 등록이 가능한 상태. 다음 커밋에서 `@PreAuthorize`로 제한
+
+### 007-01 글쓴이 저장과 표시, 로그인 사용자만 작성 가능
+
+- 작업: `Question`·`Answer`에 `@ManyToOne(fetch = LAZY) SiteUser author` 추가, `Question.addAnswer(content, author)`. `QuestionService.create`와 두 컨트롤러가 `Principal`로 로그인 사용자를 조회해 글쓴이로 저장(`UserService.getUser`). 등록 메서드에 `@PreAuthorize("isAuthenticated()")`. 목록에 글쓴이 열, 상세에 질문·답변 글쓴이 표시, 비로그인 사용자에게는 답변 입력창 비활성화. `TestInitData`가 샘플 회원 `admin`, `user1`을 만들고 샘플 글의 글쓴이로 지정
+- 이유: 교재 3-08. 수정·삭제 권한 검사(3-09)의 전제가 되는 소유자 정보
+- 교재 대응: 3-08 글쓴이 항목 추가하기
+- 강사 코드와의 차이: 교재에는 샘플 회원이 없지만, 시연과 테스트의 편의를 위해 기동 시 샘플 회원을 생성(강사 14168 BaseInitData 방식). 비밀번호는 로컬 H2 샘플용으로 BCrypt 해시되어 저장됨. 기존 데이터의 null 글쓴이는 템플릿에서 null 검사로 처리(교재와 동일)
+- 수정 파일: `question/Question.java`, `answer/Answer.java`, `question/QuestionService.java`, `question/QuestionController.java`, `answer/AnswerController.java`, `user/UserService.java`, `TestInitData.java`, `templates/question_list.html`, `templates/question_detail.html`, 테스트 4개 클래스
+- 검증: `./gradlew test` 37개 통과(비로그인 등록 시 로그인 페이지로 리다이렉트, 글쓴이 저장·표시 테스트 추가). 브라우저에서 비로그인으로 `/question/create` 접근 시 로그인 페이지로 이동, `user1` 로그인 후 질문 등록 시 목록에 글쓴이 `user1` 표시, 상세에서 답변 글쓴이 `admin`/`user1` 표시 확인
+- 학습 개념: `@ManyToOne` 단방향 연관관계와 FK, `Principal`에서 엔티티 조회, `@PreAuthorize`와 로그인 리다이렉트, `sec:authorize`로 입력창 분기
+- 제한 사항: 기존 dev DB에는 `author_id`가 null인 글이 남을 수 있음(DB 파일 삭제 후 재기동하면 샘플 데이터가 새로 생성됨)

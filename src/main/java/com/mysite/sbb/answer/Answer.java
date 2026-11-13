@@ -1,6 +1,7 @@
 package com.mysite.sbb.answer;
 
 import com.mysite.sbb.question.Question;
+import com.mysite.sbb.user.SiteUser;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,4 +26,8 @@ public class Answer {
 
     @Column(columnDefinition = "TEXT")
     private String content;
+
+    // 교재 3-08: 답변 글쓴이
+    @ManyToOne(fetch = LAZY)
+    private SiteUser author;
 }

@@ -77,6 +77,7 @@ class UserControllerTest {
     @Test
     @DisplayName("이미 있는 사용자ID로는 가입할 수 없다")
     void t4() throws Exception {
+        long before = userRepository.count();
         mvc.perform(post("/user/signup").with(csrf())
                 .param("username", "tester").param("password1", "pass1234")
                 .param("password2", "pass1234").param("email", "tester@test.com"));
@@ -91,7 +92,7 @@ class UserControllerTest {
                 .andExpect(view().name("signup_form"))
                 .andExpect(content().string(containsString("이미 등록된 사용자ID입니다.")));
 
-        assertThat(userRepository.count()).isEqualTo(1);
+        assertThat(userRepository.count()).isEqualTo(before + 1);
     }
 
     @Test

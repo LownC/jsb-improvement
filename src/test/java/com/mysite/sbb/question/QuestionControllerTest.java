@@ -13,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -79,7 +80,7 @@ class QuestionControllerTest {
     @Test
     @DisplayName("질문 등록 폼이 표시된다")
     void t5() throws Exception {
-        mvc.perform(get("/question/create"))
+        mvc.perform(get("/question/create").with(user("user1")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("question_form"))
                 .andExpect(content().string(containsString("질문등록")));
@@ -91,14 +92,15 @@ class QuestionControllerTest {
         long before = questionRepository.count();
 
         mvc.perform(post("/question/create")
-                        .with(csrf())
+                        .with(csrf()).with(user("user1"))
                         .param("subject", "새 질문")
                         .param("content", "새 내용"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/question/list"));
 
         assertThat(questionRepository.count()).isEqualTo(before + 1);
-        assertThat(questionRepository.findBySubject("새 질문")).isPresent();
+        Question saved = questionRepository.findBySubject("새 질문").orElseThrow();
+        assertThat(saved.getAuthor().getUsername()).isEqualTo("user1");
     }
 
     @Test
@@ -107,7 +109,7 @@ class QuestionControllerTest {
         long before = questionRepository.count();
 
         mvc.perform(post("/question/create")
-                        .with(csrf())
+                        .with(csrf()).with(user("user1"))
                         .param("subject", "")
                         .param("content", "내용만 있음"))
                 .andExpect(status().isOk())
@@ -116,5 +118,31 @@ class QuestionControllerTest {
                 .andExpect(content().string(containsString("제목은 필수항목입니다.")));
 
         assertThat(questionRepository.count()).isEqualTo(before);
+    }
+
+    @Test
+    @DisplayName("로그인하지 않으면 질문 등록 폼 대신 로그인 페이지로 보낸다")
+    void t8() throws Exception {
+        mvc.perform(get("/question/create"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/user/login"));
+
+        mvc.perform(post("/question/create").with(csrf())
+                        .param("subject", "익명 질문").param("content", "내용"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/user/login"));
+
+        assertThat(questionRepository.findBySubject("익명 질문")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("목록과 상세에 글쓴이가 표시된다")
+    void t9() throws Exception {
+        mvc.perform(get("/question/list"))
+                .andExpect(content().string(containsString("글쓴이")))
+                .andExpect(content().string(containsString("user1")));
+
+        mvc.perform(get("/question/detail/2"))
+                .andExpect(content().string(containsString("admin")));
     }
 }

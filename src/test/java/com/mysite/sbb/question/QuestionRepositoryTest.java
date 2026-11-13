@@ -113,7 +113,7 @@ class QuestionRepositoryTest {
 
         int beforeCount = question.getAnswers().size();
 
-        Answer newAnswer = question.addAnswer("네 자동으로 생성됩니다.");
+        Answer newAnswer = question.addAnswer("네 자동으로 생성됩니다.", question.getAuthor());
 
         // 트랜잭션이 종료된 이후에 DB에 반영되기 때문에 현재는 일단 0으로 설정된다.
         assertThat(newAnswer.getId()).isEqualTo(0);
