@@ -227,3 +227,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 24개 통과(CSRF 토큰 없는 POST는 403이 되므로 테스트에 `with(csrf())` 추가)
 - 학습 개념: `SecurityFilterChain`, CSRF 토큰과 `th:action`, `X-Frame-Options`, `PasswordEncoder`
 - 제한 사항: 로그인 페이지·회원 엔티티는 다음 커밋. 새 의존성이므로 실행 중인 서버는 재시작 필요
+
+### 005-02 회원가입 기능
+
+- 작업: `user` 패키지에 `SiteUser` 엔티티(username·email 유니크), `UserRole`, `UserRepository`, `UserService.create`(BCrypt 해시 저장), `UserCreateForm`(record), `UserController` `/user/signup` GET·POST, `signup_form.html` 추가. 내비게이션 바에 회원가입 링크
+- 이유: 교재 3-06 회원가입. 비밀번호 일치·중복 ID·이메일 형식을 검증하고 비밀번호를 평문으로 저장하지 않음
+- 교재 대응: 3-06 회원 가입 기능 구현하기
+- 강사 코드와의 차이: 폼은 record. 중복 ID는 저장 전에 `findByUsername`으로 먼저 확인해 필드 오류로 표시하고(교재는 예외만 잡음), DB 유니크 제약 위반(`DataIntegrityViolationException`)은 교재처럼 보조 처리. 엔티티 id는 프로젝트의 다른 엔티티와 같은 `int`
+- 수정 파일: `user/SiteUser.java`, `user/UserRole.java`, `user/UserRepository.java`, `user/UserService.java`, `user/UserCreateForm.java`, `user/UserController.java`, `templates/signup_form.html`(이상 신규), `templates/navbar.html`, `test/.../UserControllerTest.java`(신규)
+- 검증: `./gradlew test` 29개 통과(폼 표시·가입 후 BCrypt 검증·비밀번호 불일치·중복 ID·형식 오류 테스트 5개 추가)
+- 학습 개념: `PasswordEncoder.encode/matches`, `BindingResult.rejectValue/reject`로 수동 오류 추가, `@Column(unique = true)`
+- 제한 사항: 로그인은 다음 커밋. 브라우저 가입 확인은 로그인 구현 후 한 번에 수행
