@@ -46,9 +46,12 @@ public class AnswerController {
         }
 
         SiteUser author = userService.getUser(principal.getName());
-        question.addAnswer(answerForm.content(), author);
+        Answer answer = question.addAnswer(answerForm.content(), author);
 
-        return String.format("redirect:/question/detail/%s", id);
+        // 새 답변의 id 는 INSERT 가 실행되어야 정해진다. 트랜잭션 커밋 전이므로 flush 로 미리 실행한다. (교재 3-11)
+        answerService.flush();
+
+        return String.format("redirect:/question/detail/%s#answer_%s", id, answer.getId());
     }
 
     // 교재 3-09: 답변 수정 폼
@@ -79,7 +82,8 @@ public class AnswerController {
 
         answerService.modify(answer, form.content());
 
-        return String.format("redirect:/question/detail/%s", answer.getQuestion().getId());
+        // 교재 3-11: 수정한 답변 위치로 이동
+        return String.format("redirect:/question/detail/%s#answer_%s", answer.getQuestion().getId(), answer.getId());
     }
 
     @PreAuthorize("isAuthenticated()")

@@ -17,6 +17,11 @@ import java.time.LocalDateTime;
 public class AnswerService {
     private final AnswerRepository answerRepository;
 
+    // 대기 중인 INSERT 를 즉시 실행해 새 답변의 id 를 확정한다. (앵커 URL 생성용)
+    public void flush() {
+        answerRepository.flush();
+    }
+
     public Answer getAnswer(int id) {
         return answerRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("answer not found"));

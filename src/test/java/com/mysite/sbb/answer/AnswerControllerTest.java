@@ -45,7 +45,7 @@ class AnswerControllerTest {
                         .with(csrf()).with(user("user1"))
                         .param("content", "첫 번째 답변"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/question/detail/1"));
+                .andExpect(redirectedUrlPattern("/question/detail/1#answer_*"));
 
         assertThat(question.getAnswers()).hasSize(before + 1);
         assertThat(question.getAnswers().get(before).getContent()).isEqualTo("첫 번째 답변");
@@ -103,7 +103,7 @@ class AnswerControllerTest {
         mvc.perform(put("/answer/modify/2").with(csrf()).with(user("user1"))
                         .param("content", "수정된 답변"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/question/detail/2"));
+                .andExpect(redirectedUrl("/question/detail/2#answer_2"));
 
         Answer answer = answerRepository.findById(2).get();
         assertThat(answer.getContent()).isEqualTo("수정된 답변");
@@ -153,5 +153,21 @@ class AnswerControllerTest {
                 .andExpect(redirectedUrl("/question/detail/2"));
 
         assertThat(answerRepository.findById(1).get().getVoter()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("상세 화면의 답변마다 앵커가 있고, 등록 후 리다이렉트 URL 이 새 답변의 앵커를 가리킨다")
+    void t10() throws Exception {
+        mvc.perform(get("/question/detail/2"))
+                .andExpect(content().string(containsString("id=\"answer_1\"")))
+                .andExpect(content().string(containsString("id=\"answer_2\"")));
+
+        String location = mvc.perform(post("/answer/create/2").with(csrf()).with(user("user1"))
+                        .param("content", "앵커 확인 답변"))
+                .andReturn().getResponse().getRedirectedUrl();
+        Question question = questionRepository.findById(2).get();
+        Answer created = question.getAnswers().get(question.getAnswers().size() - 1);
+        assertThat(created.getId()).isGreaterThan(0);
+        assertThat(location).isEqualTo("/question/detail/2#answer_" + created.getId());
     }
 }

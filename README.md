@@ -293,3 +293,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 49개 통과(추천 수 증가·중복 무시·비로그인 리다이렉트·답변 추천 테스트 3개 추가)
 - 학습 개념: `@ManyToMany`와 조인 테이블, `Set`으로 중복 방지, 추천은 멱등하지 않은 요청이므로 POST
 - 제한 사항: 추천 취소 기능은 교재 범위 밖(미션 2 후보)
+
+### 010-01 답변 앵커
+
+- 작업: 상세 화면의 답변마다 `<a id="answer_{id}">` 앵커 추가. 답변 등록·수정 후 `redirect:/question/detail/{qid}#answer_{aid}` 로 이동. 등록 시 새 답변 id 를 알기 위해 `AnswerService.flush()`로 INSERT 를 즉시 실행
+- 이유: 교재 3-11. 답변이 많을 때 방금 쓴 답변 위치로 화면이 이동하도록
+- 교재 대응: 3-11 앵커 기능 추가하기
+- 강사 코드와의 차이: 교재는 `AnswerService.create`가 저장한 엔티티를 돌려주지만, 이 프로젝트는 cascade 로 저장하므로 커밋 전에는 id 가 0 이다. `flush()`로 INSERT 를 먼저 실행해 id 를 확정하는 방식으로 해결
+- 수정 파일: `templates/question_detail.html`, `answer/AnswerController.java`, `answer/AnswerService.java`, `test/.../AnswerControllerTest.java`
+- 검증: `./gradlew test` 50개 통과(리다이렉트 URL 이 실제 생성된 답변 id 의 앵커를 가리키는지 검증)
+- 학습 개념: 영속성 컨텍스트의 쓰기 지연과 `flush()`, IDENTITY 전략에서 id 가 정해지는 시점, URL 프래그먼트(`#`)는 서버로 전송되지 않음
+- 제한 사항: 없음
