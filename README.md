@@ -282,3 +282,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 46개 통과(글쓴이 수정, 타인 403, 삭제 후 질문의 답변 목록 반영, 빈 내용 거부 테스트 4개 추가). 삭제 링크의 JS 흐름은 008-01에서 동일 스크립트로 확인
 - 학습 개념: `orphanRemoval`과 cascade PERSIST 의 상호작용, 양쪽(컬렉션·리포지터리)에서 일관되게 삭제하기, 서비스 계층의 `@Transactional`
 - 제한 사항: 없음
+
+### 009-01 질문·답변 추천
+
+- 작업: `Question`·`Answer`에 `@ManyToMany Set<SiteUser> voter` 추가(조인 테이블 `question_voter`, `answer_voter`), `QuestionService.vote`·`AnswerService.vote`, 두 컨트롤러에 `@PostMapping("/vote/{id}")`, 상세 화면에 추천 버튼과 추천 수 배지
+- 이유: 교재 3-10 추천 기능
+- 교재 대응: 3-10 추천 기능 추가하기
+- 강사 코드와의 차이: 교재는 GET `/question/vote/{id}` 링크지만 데이터를 바꾸므로 POST 로 받고, 화면에서는 `a[method="POST"]` 링크를 `global.js`가 CSRF 포함 폼으로 전송(008-01과 같은 방식). `Set` 덕분에 같은 사용자의 중복 추천은 한 번만 기록됨
+- 수정 파일: `question/Question.java`, `answer/Answer.java`, `question/QuestionService.java`, `answer/AnswerService.java`, `question/QuestionController.java`, `answer/AnswerController.java`, `templates/question_detail.html`, 테스트 2개 클래스
+- 검증: `./gradlew test` 49개 통과(추천 수 증가·중복 무시·비로그인 리다이렉트·답변 추천 테스트 3개 추가)
+- 학습 개념: `@ManyToMany`와 조인 테이블, `Set`으로 중복 방지, 추천은 멱등하지 않은 요청이므로 POST
+- 제한 사항: 추천 취소 기능은 교재 범위 밖(미션 2 후보)

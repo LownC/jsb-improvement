@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
@@ -33,4 +35,8 @@ public class Answer {
     // 교재 3-08: 답변 글쓴이
     @ManyToOne(fetch = LAZY)
     private SiteUser author;
+
+    // 교재 3-10: 추천인 (answer_voter 조인 테이블)
+    @ManyToMany
+    private Set<SiteUser> voter = new HashSet<>();
 }

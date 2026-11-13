@@ -8,7 +8,9 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
@@ -39,6 +41,11 @@ public class Question {
     // 교재 3-08: 글쓴이. 여러 질문이 한 사용자를 가리키므로 @ManyToOne. 강사 권고대로 LAZY.
     @ManyToOne(fetch = LAZY)
     private SiteUser author;
+
+    // 교재 3-10: 추천인. 한 질문을 여러 사용자가, 한 사용자가 여러 질문을 추천하므로 @ManyToMany.
+    // Set 이므로 같은 사용자가 두 번 추천해도 한 번만 기록된다. (question_voter 조인 테이블)
+    @ManyToMany
+    private Set<SiteUser> voter = new HashSet<>();
 
     public Answer addAnswer(String content, SiteUser author) {
         Answer answer = new Answer();

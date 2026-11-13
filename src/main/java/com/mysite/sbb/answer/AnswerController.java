@@ -95,6 +95,17 @@ public class AnswerController {
         return String.format("redirect:/question/detail/%s", questionId);
     }
 
+    // 교재 3-10: 답변 추천 (POST)
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/vote/{id}")
+    public String answerVote(@PathVariable int id, Principal principal) {
+        Answer answer = answerService.getAnswer(id);
+        SiteUser siteUser = userService.getUser(principal.getName());
+        answerService.vote(answer, siteUser);
+
+        return String.format("redirect:/question/detail/%s", answer.getQuestion().getId());
+    }
+
     private void checkOwner(Answer answer, Principal principal) {
         if (answer.getAuthor() == null || !answer.getAuthor().getUsername().equals(principal.getName())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 또는 삭제 권한이 없습니다.");

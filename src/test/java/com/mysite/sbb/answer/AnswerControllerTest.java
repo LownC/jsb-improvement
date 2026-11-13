@@ -144,4 +144,14 @@ class AnswerControllerTest {
                 .andExpect(view().name("answer_form"))
                 .andExpect(model().attributeHasFieldErrors("form", "content"));
     }
+
+    @Test
+    @DisplayName("답변을 추천하면 추천인이 기록되고 질문 상세로 돌아간다")
+    void t9() throws Exception {
+        mvc.perform(post("/answer/vote/1").with(csrf()).with(user("user1")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/question/detail/2"));
+
+        assertThat(answerRepository.findById(1).get().getVoter()).hasSize(1);
+    }
 }

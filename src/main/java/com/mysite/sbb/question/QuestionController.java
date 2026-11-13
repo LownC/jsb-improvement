@@ -114,6 +114,17 @@ public class QuestionController {
         return "redirect:/";
     }
 
+    // 교재 3-10: 추천. 교재는 GET 링크지만 데이터를 바꾸므로 POST 로 받는다. (화면의 a[method="POST"] → global.js)
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/vote/{id}")
+    public String questionVote(@PathVariable int id, Principal principal) {
+        Question question = questionService.getQuestion(id);
+        SiteUser siteUser = userService.getUser(principal.getName());
+        questionService.vote(question, siteUser);
+
+        return String.format("redirect:/question/detail/%s", id);
+    }
+
     // 글쓴이 본인인지 확인. 교재는 400(BAD_REQUEST)을 쓰지만 권한 문제이므로 403(FORBIDDEN)이 더 정확하다.
     private void checkOwner(Question question, Principal principal) {
         if (question.getAuthor() == null || !question.getAuthor().getUsername().equals(principal.getName())) {

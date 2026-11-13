@@ -62,4 +62,10 @@ public class QuestionService {
     public void delete(Question question) {
         questionRepository.delete(question);
     }
+
+    // 교재 3-10: 추천. Set 이라 중복 추천은 무시된다.
+    public void vote(Question question, SiteUser siteUser) {
+        question.getVoter().add(siteUser);
+        questionRepository.save(question);
+    }
 }

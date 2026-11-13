@@ -1,6 +1,7 @@
 package com.mysite.sbb.answer;
 
 import com.mysite.sbb.DataNotFoundException;
+import com.mysite.sbb.user.SiteUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,5 +35,12 @@ public class AnswerService {
     public void delete(Answer answer) {
         answer.getQuestion().removeAnswer(answer);
         answerRepository.delete(answer);
+    }
+
+    // 교재 3-10: 추천
+    @Transactional
+    public void vote(Answer answer, SiteUser siteUser) {
+        answer.getVoter().add(siteUser);
+        answerRepository.save(answer);
     }
 }

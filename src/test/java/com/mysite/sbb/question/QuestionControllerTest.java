@@ -218,4 +218,31 @@ class QuestionControllerTest {
         mvc.perform(get("/question/detail/1").with(user("admin")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(containsString("/question/modify/1"))));
     }
+
+    @Test
+    @DisplayName("추천하면 추천인이 늘고, 같은 사용자가 다시 추천해도 늘지 않는다")
+    void t15() throws Exception {
+        mvc.perform(post("/question/vote/1").with(csrf()).with(user("admin")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/question/detail/1"));
+        assertThat(questionRepository.findById(1).get().getVoter()).hasSize(1);
+
+        mvc.perform(post("/question/vote/1").with(csrf()).with(user("admin")));
+        assertThat(questionRepository.findById(1).get().getVoter()).hasSize(1);
+
+        mvc.perform(post("/question/vote/1").with(csrf()).with(user("user1")));
+        assertThat(questionRepository.findById(1).get().getVoter()).hasSize(2);
+
+        mvc.perform(get("/question/detail/1"))
+                .andExpect(content().string(containsString("badge rounded-pill bg-success\">2")));
+    }
+
+    @Test
+    @DisplayName("로그인하지 않으면 추천할 수 없다")
+    void t16() throws Exception {
+        mvc.perform(post("/question/vote/1").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("**/user/login"));
+        assertThat(questionRepository.findById(1).get().getVoter()).isEmpty();
+    }
 }

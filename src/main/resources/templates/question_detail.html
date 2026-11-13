@@ -20,14 +20,23 @@
                     <div th:text="${#temporals.format(question.createDate, 'yyyy-MM-dd HH:mm')}"></div>
                 </div>
             </div>
-            <!-- 교재 3-09: 글쓴이 본인에게만 수정·삭제 버튼을 보여준다. 서버에서도 한 번 더 검사한다. -->
-            <div class="my-3" sec:authorize="isAuthenticated()"
-                 th:if="${question.author != null and #authentication.name == question.author.username}">
+            <div class="my-3">
+                <!-- 교재 3-10: 추천. 로그인하지 않으면 서버가 로그인 페이지로 보낸다. -->
+                <a th:href="@{|/question/vote/${question.id}|}" method="POST"
+                   onclick="return confirm('정말로 추천하시겠습니까?');"
+                   class="btn btn-sm btn-outline-secondary">
+                    추천
+                    <span class="badge rounded-pill bg-success" th:text="${#lists.size(question.voter)}"></span>
+                </a>
+                <!-- 교재 3-09: 글쓴이 본인에게만 수정·삭제 버튼을 보여준다. 서버에서도 한 번 더 검사한다. -->
+                <th:block sec:authorize="isAuthenticated()"
+                          th:if="${question.author != null and #authentication.name == question.author.username}">
                 <a th:href="@{|/question/modify/${question.id}|}" class="btn btn-sm btn-outline-secondary">수정</a>
                 <!-- 삭제는 GET 이 아니라 DELETE. global.js 가 폼 전송으로 바꿔 준다. (강사 14168 43강) -->
                 <a th:href="@{|/question/delete/${question.id}|}" method="DELETE"
                    onclick="return confirm('정말로 삭제하시겠습니까?');"
                    class="btn btn-sm btn-outline-secondary">삭제</a>
+                </th:block>
             </div>
         </div>
     </div>
@@ -49,12 +58,20 @@
                     <div th:text="${#temporals.format(answer.createDate, 'yyyy-MM-dd HH:mm')}"></div>
                 </div>
             </div>
-            <div class="my-3" sec:authorize="isAuthenticated()"
-                 th:if="${answer.author != null and #authentication.name == answer.author.username}">
+            <div class="my-3">
+                <a th:href="@{|/answer/vote/${answer.id}|}" method="POST"
+                   onclick="return confirm('정말로 추천하시겠습니까?');"
+                   class="btn btn-sm btn-outline-secondary">
+                    추천
+                    <span class="badge rounded-pill bg-success" th:text="${#lists.size(answer.voter)}"></span>
+                </a>
+                <th:block sec:authorize="isAuthenticated()"
+                          th:if="${answer.author != null and #authentication.name == answer.author.username}">
                 <a th:href="@{|/answer/modify/${answer.id}|}" class="btn btn-sm btn-outline-secondary">수정</a>
                 <a th:href="@{|/answer/delete/${answer.id}|}" method="DELETE"
                    onclick="return confirm('정말로 삭제하시겠습니까?');"
                    class="btn btn-sm btn-outline-secondary">삭제</a>
+                </th:block>
             </div>
         </div>
     </div>
