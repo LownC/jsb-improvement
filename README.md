@@ -183,3 +183,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 20개 통과(폼 표시·정상 등록·빈 제목 거부 테스트 3개 추가). 브라우저에서 빈 폼 제출 시 오류 메시지 2개 표시와 등록 거부 확인
 - 학습 개념: Bean Validation(`@NotBlank`, `@Size`), `@ModelAttribute`와 `th:object`/`th:field`, `BindingResult`의 역할, `#fields.allErrors()`
 - 제한 사항: 의존성을 추가한 뒤에는 실행 중인 `bootRun`을 재시작해야 검증이 동작함(DevTools 재시작은 새 의존성을 반영하지 못함). 작성자 정보는 회원 기능 이후 추가
+
+### 003-02 답변 등록, 입력값 검증
+
+- 작업: `AnswerForm`(record) 추가. `AnswerController.createAnswer`가 `@Valid`·`BindingResult`로 검증하고 실패 시 질문 상세 화면을 다시 렌더링. `QuestionController.detail`에 `answerForm` 모델 속성 추가, `question_detail.html` 답변 폼을 `th:object`/`th:field`와 오류 프래그먼트로 변경
+- 이유: 교재 2-16의 답변 폼 검증. 빈 답변이 저장되지 않도록 서버 측에서 거부
+- 교재 대응: 2-16 질문 등록 및 폼(답변 부분)
+- 강사 코드와의 차이: 교재는 `AnswerService.create`로 저장하지만, 기존 코드의 `question.addAnswer()` + 컨트롤러 `@Transactional`(cascade PERSIST) 방식을 유지(14163 37강). 폼은 record
+- 수정 파일: `answer/AnswerForm.java`(신규), `answer/AnswerController.java`, `question/QuestionController.java`, `templates/question_detail.html`, `test/.../AnswerControllerTest.java`(신규)
+- 검증: `./gradlew test` 23개 통과(답변 등록·빈 답변 거부·없는 질문 404 테스트 3개 추가)
+- 학습 개념: 한 화면에 두 폼 객체가 있을 때 모델 이름 구분(`form` vs `answerForm`), 검증 실패 시 원래 화면 재렌더링에 필요한 모델 복구
+- 제한 사항: 브라우저 검증은 다음 커밋의 화면 확인과 함께 수행

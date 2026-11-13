@@ -1,5 +1,6 @@
 package com.mysite.sbb.question;
 
+import com.mysite.sbb.answer.AnswerForm;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -23,8 +24,9 @@ public class QuestionController {
         return "question_list";
     }
 
+    // AnswerForm 매개변수는 상세 화면의 답변 폼(th:object="${answerForm}")을 위해 빈 객체를 모델에 싣는 역할만 한다.
     @GetMapping("/detail/{id}")
-    public String detail(Model model, @PathVariable int id) {
+    public String detail(Model model, @PathVariable int id, @ModelAttribute("answerForm") AnswerForm answerForm) {
         Question question = questionService.getQuestion(id);
 
         model.addAttribute("question", question);
