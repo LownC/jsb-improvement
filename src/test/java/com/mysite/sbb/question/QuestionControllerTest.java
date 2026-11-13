@@ -66,7 +66,9 @@ class QuestionControllerTest {
         mvc.perform(get("/question/list").param("page", "0"))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("paging"))
-                .andExpect(content().string(containsString("pagination")));
+                .andExpect(content().string(containsString("pagination")))
+                // 답변이 2개인 질문에는 답변 개수 배지가 표시된다 (교재 3-04)
+                .andExpect(content().string(containsString("text-danger small ms-2")));
 
         // 범위를 벗어난 페이지는 빈 페이지로 응답하고 오류가 나지 않는다
         mvc.perform(get("/question/list").param("page", "99"))

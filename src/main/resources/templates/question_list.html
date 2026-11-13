@@ -12,10 +12,15 @@
         </tr>
         </thead>
         <tbody>
-        <tr class="text-center" th:each="question : ${paging}">
-            <td th:text="${question.id}"></td>
+        <tr class="text-center" th:each="question, loop : ${paging}">
+            <!-- 교재 3-03: DB id 대신 "전체 건수 - (페이지 번호 * 페이지 크기) - 현재 행" 으로 역순 번호를 매긴다 -->
+            <td th:text="${paging.totalElements - (paging.number * paging.size) - loop.index}"></td>
             <td class="text-start">
                 <a th:href="@{|/question/detail/${question.id}|}" th:text="${question.subject}"></a>
+                <!-- 교재 3-04: 답변이 있으면 개수를 제목 옆에 표시 -->
+                <span class="text-danger small ms-2"
+                      th:if="${#lists.size(question.answers) > 0}"
+                      th:text="${#lists.size(question.answers)}"></span>
             </td>
             <td th:text="${#temporals.format(question.createDate, 'yyyy-MM-dd HH:mm')}"></td>
         </tr>
