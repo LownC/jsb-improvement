@@ -315,3 +315,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 54개 통과(마크다운 변환·HTML 이스케이프·null 처리 단위 테스트 3개, 상세 화면 렌더링 테스트 1개 추가)
 - 학습 개념: `th:text` vs `th:utext`, 템플릿에서 빈 호출(`@beanName`), XSS 와 이스케이프
 - 제한 사항: 새 의존성이므로 실행 중인 서버는 재시작 필요. 마크다운 에디터(미리보기)는 미션 2 범위
+
+### 012-01 검색 기능
+
+- 작업: `QuestionRepository.findAllByKeyword`(JPQL `@Query`, 제목·내용·질문 글쓴이·답변 내용·답변 글쓴이 `like`, `distinct`), `QuestionService.getList(page, kw)`, `QuestionController.list`의 `kw` 파라미터, 목록 화면의 검색창·찾기 버튼과 검색어를 유지하는 페이지 이동(숨은 GET 폼 + 스크립트)
+- 이유: 교재 3-13 검색 기능
+- 교재 대응: 3-13 검색 기능 추가하기
+- 강사 코드와의 차이: 교재가 소개하는 두 방식(Specification, `@Query`) 중 읽기 쉬운 `@Query`(JPQL)를 채택. 검색창에서 Enter 로도 검색되도록 키 이벤트 추가. 조회이므로 폼은 GET 유지
+- 수정 파일: `question/QuestionRepository.java`, `question/QuestionService.java`, `question/QuestionController.java`, `templates/question_list.html`, `test/.../QuestionControllerTest.java`
+- 검증: `./gradlew test` 56개 통과(제목·답변 내용·답변 글쓴이·질문 글쓴이·없는 단어 검색 건수, 검색어 유지 테스트 2개 추가)
+- 학습 개념: JPQL `left outer join ... on`, `distinct` 가 필요한 이유(1:N 조인의 행 중복), `Page` 와 검색 조건의 결합, 조회 요청은 GET 으로
+- 제한 사항: `like %kw%` 는 인덱스를 타지 못하므로 데이터가 많아지면 전문 검색 도입을 고려

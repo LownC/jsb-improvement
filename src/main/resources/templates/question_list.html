@@ -3,6 +3,18 @@
     <title>질문 목록</title>
 </head>
 <div layout:fragment="content" class="container my-3">
+    <div class="row my-3">
+        <div class="col-6">
+            <a th:href="@{/question/create}" class="btn btn-primary">질문 등록하기</a>
+        </div>
+        <div class="col-6">
+            <!-- 교재 3-13: 검색어 입력. 찾기 버튼은 아래 searchForm 을 통해 전송한다 -->
+            <div class="input-group">
+                <input type="text" id="search_kw" class="form-control" th:value="${kw}" placeholder="검색어">
+                <button class="btn btn-outline-secondary" type="button" id="btn_search">찾기</button>
+            </div>
+        </div>
+    </div>
     <table class="table">
         <thead class="table-dark">
         <tr class="text-center">
@@ -29,11 +41,11 @@
         </tr>
         </tbody>
     </table>
-    <!-- 페이징처리 시작 (교재 3-02) -->
+    <!-- 페이징처리 시작 (교재 3-02). 링크 대신 data-page 로 두고 searchForm 으로 전송해 검색어를 유지한다 (교재 3-13) -->
     <div th:if="${!paging.isEmpty()}">
         <ul class="pagination justify-content-center">
             <li class="page-item" th:classappend="${!paging.hasPrevious} ? 'disabled'">
-                <a class="page-link" th:href="@{|?page=${paging.number - 1}|}">
+                <a class="page-link" href="javascript:void(0)" th:data-page="${paging.number - 1}">
                     <span>이전</span>
                 </a>
             </li>
@@ -41,16 +53,39 @@
             <li th:each="page : ${#numbers.sequence(0, paging.totalPages - 1)}"
                 th:if="${page >= paging.number - 5 and page <= paging.number + 5}"
                 th:classappend="${page == paging.number} ? 'active'" class="page-item">
-                <a th:text="${page}" class="page-link" th:href="@{|?page=${page}|}"></a>
+                <a th:text="${page}" class="page-link" href="javascript:void(0)" th:data-page="${page}"></a>
             </li>
             <li class="page-item" th:classappend="${!paging.hasNext} ? 'disabled'">
-                <a class="page-link" th:href="@{|?page=${paging.number + 1}|}">
+                <a class="page-link" href="javascript:void(0)" th:data-page="${paging.number + 1}">
                     <span>다음</span>
                 </a>
             </li>
         </ul>
     </div>
     <!-- 페이징처리 끝 -->
-    <a th:href="@{/question/create}" class="btn btn-primary">질문 등록하기</a>
+    <!-- 검색어와 페이지 번호를 함께 보내는 숨은 폼. 조회이므로 GET -->
+    <form th:action="@{/question/list}" method="get" id="searchForm">
+        <input type="hidden" id="kw" name="kw" th:value="${kw}">
+        <input type="hidden" id="page" name="page" th:value="${paging.number}">
+    </form>
 </div>
+<script layout:fragment="script" type="text/javascript">
+    // 페이지 링크 클릭 → page 값만 바꿔서 전송 (검색어 유지)
+    document.querySelectorAll(".page-link").forEach(function (element) {
+        element.addEventListener("click", function () {
+            document.getElementById("page").value = this.dataset.page;
+            document.getElementById("searchForm").submit();
+        });
+    });
+    // 찾기 버튼 클릭(또는 검색창에서 Enter) → 검색어를 넣고 0페이지부터 조회
+    function submitSearch() {
+        document.getElementById("kw").value = document.getElementById("search_kw").value;
+        document.getElementById("page").value = 0;
+        document.getElementById("searchForm").submit();
+    }
+    document.getElementById("btn_search").addEventListener("click", submitSearch);
+    document.getElementById("search_kw").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") submitSearch();
+    });
+</script>
 </html>

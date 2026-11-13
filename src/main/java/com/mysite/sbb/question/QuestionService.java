@@ -25,9 +25,14 @@ public class QuestionService {
     // 한 페이지 10건, 최신 글이 먼저 오도록 작성일시 내림차순 정렬 (교재 3-02)
     // 작성일시가 같은 글(샘플 데이터 등)의 순서가 매번 바뀌지 않도록 id 내림차순을 2차 정렬로 둔다.
     public Page<Question> getList(int page) {
+        return getList(page, "");
+    }
+
+    // 교재 3-13: 검색어가 비어 있으면 전체 목록과 같다. (like %% 는 모든 행과 일치)
+    public Page<Question> getList(int page, String kw) {
         Pageable pageable = PageRequest.of(page, 10,
                 Sort.by(Sort.Order.desc("createDate"), Sort.Order.desc("id")));
-        return questionRepository.findAll(pageable);
+        return questionRepository.findAllByKeyword(kw, pageable);
     }
 
     public Question getQuestion(int id) {

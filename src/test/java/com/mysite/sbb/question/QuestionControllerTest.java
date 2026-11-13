@@ -255,4 +255,41 @@ class QuestionControllerTest {
         mvc.perform(get("/question/detail/1"))
                 .andExpect(content().string(containsString("<strong>굵은 글씨</strong>")));
     }
+
+    @Test
+    @DisplayName("검색어는 제목·내용·글쓴이·답변 내용·답변 글쓴이에서 찾는다")
+    void t18() throws Exception {
+        // 제목
+        mvc.perform(get("/question/list").param("kw", "스프링부트"))
+                .andExpect(model().attribute("paging", org.hamcrest.Matchers.hasProperty("totalElements", org.hamcrest.Matchers.is(1L))))
+                .andExpect(content().string(containsString("스프링부트 모델 질문입니다.")));
+
+        // 답변 내용 ("맞습니다!" 는 2번 질문의 답변)
+        mvc.perform(get("/question/list").param("kw", "맞습니다"))
+                .andExpect(model().attribute("paging", org.hamcrest.Matchers.hasProperty("totalElements", org.hamcrest.Matchers.is(1L))));
+
+        // 답변 글쓴이 (admin 은 2번 질문의 답변 글쓴이)
+        mvc.perform(get("/question/list").param("kw", "admin"))
+                .andExpect(model().attribute("paging", org.hamcrest.Matchers.hasProperty("totalElements", org.hamcrest.Matchers.is(1L))));
+
+        // 질문 글쓴이 (user1 은 두 질문 모두의 글쓴이)
+        mvc.perform(get("/question/list").param("kw", "user1"))
+                .andExpect(model().attribute("paging", org.hamcrest.Matchers.hasProperty("totalElements", org.hamcrest.Matchers.is(2L))));
+
+        // 없는 단어
+        mvc.perform(get("/question/list").param("kw", "존재하지않는단어"))
+                .andExpect(model().attribute("paging", org.hamcrest.Matchers.hasProperty("totalElements", org.hamcrest.Matchers.is(0L))));
+    }
+
+    @Test
+    @DisplayName("검색어가 없으면 전체 목록이고, 검색어가 화면과 숨은 폼에 유지된다")
+    void t19() throws Exception {
+        mvc.perform(get("/question/list"))
+                .andExpect(model().attribute("paging", org.hamcrest.Matchers.hasProperty("totalElements", org.hamcrest.Matchers.is(2L))));
+
+        mvc.perform(get("/question/list").param("kw", "sbb"))
+                .andExpect(model().attribute("kw", "sbb"))
+                .andExpect(content().string(containsString("id=\"search_kw\" class=\"form-control\" value=\"sbb\"")))
+                .andExpect(content().string(containsString("id=\"kw\" name=\"kw\" value=\"sbb\"")));
+    }
 }

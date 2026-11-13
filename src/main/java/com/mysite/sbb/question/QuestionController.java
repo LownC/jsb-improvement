@@ -23,11 +23,16 @@ public class QuestionController {
     private final QuestionService questionService;
     private final UserService userService;
 
-    // ?page=N (0부터 시작) 파라미터로 페이지를 고른다. 없으면 첫 페이지.
+    // ?page=N (0부터 시작) 파라미터로 페이지를 고른다. 없으면 첫 페이지. kw 는 검색어. (교재 3-02, 3-13)
     @GetMapping("/list")
-    public String list(Model model, @RequestParam(value = "page", defaultValue = "0") int page) {
-        Page<Question> paging = questionService.getList(page);
+    public String list(
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "kw", defaultValue = "") String kw
+    ) {
+        Page<Question> paging = questionService.getList(page, kw);
         model.addAttribute("paging", paging);
+        model.addAttribute("kw", kw);
 
         return "question_list";
     }
