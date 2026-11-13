@@ -31,6 +31,17 @@ public class SecurityConfig {
                 )
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+                )
+                // 교재 3-07: 로그인 페이지는 /user/login, 성공하면 루트로. 로그인 처리(POST /user/login)는 시큐리티가 담당한다.
+                .formLogin(formLogin -> formLogin
+                        .loginPage("/user/login")
+                        .defaultSuccessUrl("/")
+                )
+                // 로그아웃은 POST /user/logout (CSRF 토큰 필요) 후 루트로 이동, 세션 무효화
+                .logout(logout -> logout
+                        .logoutUrl("/user/logout")
+                        .logoutSuccessUrl("/")
+                        .invalidateHttpSession(true)
                 );
 
         return http.build();

@@ -53,4 +53,10 @@ public class UserController {
 
         return "redirect:/";
     }
+
+    // GET 은 로그인 화면만 보여준다. POST /user/login 은 Spring Security 가 처리하므로 메서드가 필요 없다. (교재 3-07)
+    @GetMapping("/login")
+    public String login() {
+        return "login_form";
+    }
 }

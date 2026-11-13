@@ -10,8 +10,20 @@
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/question/list}">질문 목록</a>
                 </li>
-                <li class="nav-item">
+                <!-- sec:authorize 는 thymeleaf-extras-springsecurity6 가 제공한다. (교재 3-07) -->
+                <li class="nav-item" sec:authorize="isAnonymous()">
+                    <a class="nav-link" th:href="@{/user/login}">로그인</a>
+                </li>
+                <li class="nav-item" sec:authorize="isAnonymous()">
                     <a class="nav-link" th:href="@{/user/signup}">회원가입</a>
+                </li>
+                <!-- 로그아웃은 상태를 바꾸는 요청이므로 GET 링크가 아니라 POST 폼으로 보낸다. th:action 이 CSRF 토큰을 넣어 준다. -->
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <form th:action="@{/user/logout}" method="post" class="d-inline">
+                        <button type="submit" class="nav-link btn btn-link p-0 align-baseline">
+                            로그아웃 (<span sec:authentication="name"></span>)
+                        </button>
+                    </form>
                 </li>
             </ul>
         </div>

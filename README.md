@@ -238,3 +238,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 29개 통과(폼 표시·가입 후 BCrypt 검증·비밀번호 불일치·중복 ID·형식 오류 테스트 5개 추가)
 - 학습 개념: `PasswordEncoder.encode/matches`, `BindingResult.rejectValue/reject`로 수동 오류 추가, `@Column(unique = true)`
 - 제한 사항: 로그인은 다음 커밋. 브라우저 가입 확인은 로그인 구현 후 한 번에 수행
+
+### 006-01 로그인·로그아웃 기능
+
+- 작업: `UserSecurityService`(`UserDetailsService` 구현, admin → ADMIN 권한), `SecurityConfig`에 `formLogin`(`/user/login`, 성공 시 `/`)과 `logout`(`/user/logout`, 세션 무효화) 설정, `UserController.login` GET, `login_form.html`, 내비게이션 바를 로그인 상태에 따라 로그인·회원가입 / 로그아웃(사용자명)으로 분기
+- 이유: 교재 3-07 로그인·로그아웃. 이후 글쓴이 저장과 권한 검사의 전제
+- 교재 대응: 3-07 로그인과 로그아웃 기능 구현하기
+- 강사 코드와의 차이: 교재는 로그아웃을 GET 링크(`AntPathRequestMatcher`)로 허용하지만, 상태를 바꾸는 요청이므로 Spring Security 기본값대로 POST 폼(CSRF 토큰 포함)으로 보냄. 내비게이션 바에 `sec:authentication="name"`으로 현재 사용자명 표시
+- 수정 파일: `user/UserSecurityService.java`(신규), `SecurityConfig.java`, `user/UserController.java`, `templates/login_form.html`(신규), `templates/navbar.html`, `test/.../LoginTest.java`(신규)
+- 검증: `./gradlew test` 34개 통과(로그인 폼·성공·실패·로그아웃·메뉴 분기 테스트 5개). 서버 재시작 후 브라우저에서 테스트 계정 가입 → 로그인(메뉴에 `로그아웃 (demo1)` 표시) → 로그아웃까지 확인
+- 학습 개념: `UserDetailsService`와 `DaoAuthenticationProvider`, `formLogin`/`logout` 설정, `sec:authorize`·`sec:authentication`, 로그아웃이 POST인 이유
+- 제한 사항: 로그인 없이도 질문·답변 등록이 가능한 상태. 다음 커밋에서 `@PreAuthorize`로 제한
