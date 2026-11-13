@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -90,6 +91,7 @@ class QuestionControllerTest {
         long before = questionRepository.count();
 
         mvc.perform(post("/question/create")
+                        .with(csrf())
                         .param("subject", "새 질문")
                         .param("content", "새 내용"))
                 .andExpect(status().is3xxRedirection())
@@ -105,6 +107,7 @@ class QuestionControllerTest {
         long before = questionRepository.count();
 
         mvc.perform(post("/question/create")
+                        .with(csrf())
                         .param("subject", "")
                         .param("content", "내용만 있음"))
                 .andExpect(status().isOk())

@@ -216,3 +216,14 @@ DB 계정 등 개인 설정값은 이 문서에 기록하지 않습니다.
 - 검증: `./gradlew test` 24개 통과. 브라우저에서 마지막 페이지(`?page=30`)의 번호가 2, 1이고 2번 질문 옆에 답변 개수 2가 표시됨을 확인
 - 학습 개념: Thymeleaf 반복 상태 변수(`loop.index`), `Page`의 `totalElements`/`number`/`size`, 지연 로딩과 N+1
 - 제한 사항: 답변 개수 조회의 N+1 최적화는 미션 2 이후 과제로 남김
+
+### 005-01 Spring Security 도입
+
+- 작업: `spring-boot-starter-security`, `thymeleaf-extras-springsecurity6`, `spring-security-test` 의존성 추가. `SecurityConfig`에서 모든 URL 허용, CSRF 유지(H2 콘솔만 예외), 같은 출처 프레임 허용, `BCryptPasswordEncoder` 빈 등록, `@EnableMethodSecurity`. dev 프로파일에 H2 콘솔 활성화. 기존 MockMvc POST 테스트에 `csrf()` 적용
+- 이유: 교재 3-05. 회원가입·로그인 구현의 기반이며, CSRF 보호를 끄지 않고 폼 전송이 동작하도록 함
+- 교재 대응: 3-05 스프링 시큐리티란?
+- 강사 코드와의 차이: 강사(14168 46강)도 전체 허용 + 정적 자원·H2 콘솔 예외로 시작. `AntPathRequestMatcher` 대신 Boot 3.5의 문자열 `requestMatchers("/**")` 사용. 메서드 보안(`@PreAuthorize`)을 처음부터 활성화
+- 수정 파일: `build.gradle.kts`, `SecurityConfig.java`(신규), `application-dev.yaml`, `test/.../QuestionControllerTest.java`, `test/.../AnswerControllerTest.java`
+- 검증: `./gradlew test` 24개 통과(CSRF 토큰 없는 POST는 403이 되므로 테스트에 `with(csrf())` 추가)
+- 학습 개념: `SecurityFilterChain`, CSRF 토큰과 `th:action`, `X-Frame-Options`, `PasswordEncoder`
+- 제한 사항: 로그인 페이지·회원 엔티티는 다음 커밋. 새 의존성이므로 실행 중인 서버는 재시작 필요

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -34,6 +35,7 @@ class AnswerControllerTest {
         int before = question.getAnswers().size();
 
         mvc.perform(post("/answer/create/1")
+                        .with(csrf())
                         .param("content", "첫 번째 답변"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/question/detail/1"));
@@ -49,6 +51,7 @@ class AnswerControllerTest {
         int before = question.getAnswers().size();
 
         mvc.perform(post("/answer/create/1")
+                        .with(csrf())
                         .param("content", "   "))
                 .andExpect(status().isOk())
                 .andExpect(view().name("question_detail"))
@@ -62,6 +65,7 @@ class AnswerControllerTest {
     @DisplayName("없는 질문에 답변하면 404")
     void t3() throws Exception {
         mvc.perform(post("/answer/create/9999")
+                        .with(csrf())
                         .param("content", "답변"))
                 .andExpect(status().isNotFound());
     }
